@@ -26,35 +26,46 @@ OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef BONJOURRECORD_H
-#define BONJOURRECORD_H
+#ifndef BONJOURSERVICEBROWSER_H
+#define BONJOURSERVICEBROWSER_H
 
-#include <QtCore/QMetaType>
-#include <QtCore/QString>
+#include <QtCore/QObject>
+#include <dns_sd.h>
+#include "Record.hpp"
 
-class BonjourRecord
+class QSocketNotifier;
+
+namespace bonjour {
+
+class ServiceBrowser : public QObject
 {
+    Q_OBJECT
 public:
-    BonjourRecord() {}
-    BonjourRecord(const QString &name, const QString &regType, const QString &domain)
-        : serviceName(name), registeredType(regType), replyDomain(domain)
-    {}
-    BonjourRecord(const char *name, const char *regType, const char *domain)
-    {
-        serviceName = QString::fromUtf8(name);
-        registeredType = QString::fromUtf8(regType);
-        replyDomain = QString::fromUtf8(domain);
-    }
-    QString serviceName;
-    QString registeredType;
-    QString replyDomain;
-    bool operator==(const BonjourRecord &other) const {
-        return serviceName == other.serviceName
-               && registeredType == other.registeredType
-               && replyDomain == other.replyDomain;
-    }
+    ServiceBrowser(QObject *parent = 0);
+    ~ServiceBrowser();
+    void browseForServiceType(const QString &serviceType);
+    inline QList<Record> currentRecords() const { return bonjourRecords; }
+    inline QString serviceType() const { return browsingType; }
+
+signals:
+    void currentRecordsChanged(const QList<bonjour::Record> &list);
+    void recordAdded(bonjour::Record record);
+    void recordRemoved(bonjour::Record record);
+    void error(DNSServiceErrorType err);
+
+private slots:
+    void socketReadyRead();
+
+private:
+    static void DNSSD_API bonjourBrowseReply(DNSServiceRef , DNSServiceFlags flags, quint32,
+                                   DNSServiceErrorType errorCode, const char *serviceName,
+                                   const char *regType, const char *replyDomain, void *context);
+    DNSServiceRef dnssref;
+    QSocketNotifier *bonjourSocket;
+    QList<Record> bonjourRecords;
+    QString browsingType;
 };
 
-Q_DECLARE_METATYPE(BonjourRecord)
+}  // namespace bonjour
 
-#endif // BONJOURRECORD_H
+#endif // BONJOURSERVICEBROWSER_H

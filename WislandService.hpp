@@ -21,29 +21,53 @@
 **
 ****************************************************************************/
 
-#include <QCoreApplication>
-#include <QtCore>
+#ifndef SERVER_H
+#define SERVER_H
 
-#include <stdlib.h>
+#include <QObject>
+#include <QString>
+#include <QStringList>
+#include <QList>
+#include <QImage>
+#include <QImageReader>
 
-#include "WislandService.hpp"
-//#include "ChatClient.h"
+#ifdef __QNXNTO__
+#include <qt4/QtNetwork/QtNetwork>
+#else
+#include <QtNetwork>
+#endif
 
-#include <QCoreApplication>
+#include "network/Action.hpp"
+#include "network/ServiceConnection.hpp"
+#include  "bonjour/Record.hpp"
 
-int main(int argc, char *argv[])
-{
-    qsrand(rand());
-    QCoreApplication app(argc, argv);
-    Server server;
-    //QScopedPointer<ChatClient> chatClient(new ChatClient(QLatin1String("_wisland_chat._tcp"), 0));
-//    server.show();
-    //qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
-//    QString pin = QCryptographicHash::hash(QHostInfo::localHostName(), QCryptographicHash::Md5).toHex();
-//    serviceName = QString("Wisland-DESKTOP:%1").arg(pin.toUpper());
-//    WService * chatClient = new WService(QLatin1String(serviceName.toLatin1()),
-//                QLatin1String("_wisland_chat._tcp"), app);
-    //chatClient->setParent(&app);
-    return app.exec();
+class QTcpServer;
+class QTcpSocket;
+
+namespace bonjour {
+    class ServiceRegister;
+    class ServiceConnection;
+    class Record;
 }
 
+class Server : public QObject
+{
+    Q_OBJECT
+public:
+    Server(QObject *parent = 0);
+private slots:
+    void clientAdded();
+    void decodeAction(network::Action action);
+    void onServiceRegistered(const bonjour::Record &record);
+    void onServiceManagerZombie();
+private:
+    void sendUserDataAction(network::ServiceConnection *connection);
+    void sendAction(network::Action::ActionType actionType);
+    QTcpServer *tcpServer;
+    QStringList fortunes;
+    qint64 timestamp;
+    bonjour::ServiceRegister *bonjourRegister;
+    bonjour::Record m_record;
+};
+
+#endif

@@ -5,16 +5,15 @@
  *      Author: rodrigopex
  */
 
-#include "Serializable.h"
-#include <QMetaProperty>
+#include "Serializable.hpp"
+
+namespace network {
+
 Serializable::Serializable(QObject *parent) :
 		QObject(parent) {
-	// TODO Auto-generated constructor stub
-
 }
 
 Serializable::~Serializable() {
-	// TODO Auto-generated destructor stub
 }
 
 QDataStream &operator<<(QDataStream &ds, const Serializable &obj) {
@@ -35,3 +34,5 @@ QDataStream &operator>>(QDataStream &ds, Serializable &obj) {
 	}
 	return ds;
 }
+
+}  // namespace bonjour

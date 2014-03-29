@@ -26,49 +26,46 @@
  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BONJOURSERVICERESOLVER_H
-#define BONJOURSERVICERESOLVER_H
+#ifndef BONJOURRECORD_H
+#define BONJOURRECORD_H
 
-#include <QtCore/QObject>
+#include <QVariantMap>
+#include <QSharedData>
+#include <QtCore/QString>
+#include <QtCore/QMetaType>
 
-#include <dns_sd.h>
-#include <sys/socket.h>
+#include "RecordPrivate.hpp"
 
-class QSocketNotifier;
-class QHostAddress;
-class BonjourRecord;
+namespace bonjour {
 
-class BonjourServiceResolver: public QObject {
-Q_OBJECT
+class Record {
 public:
-	BonjourServiceResolver(QObject *parent);
-	~BonjourServiceResolver();
+	Record();
+	Record(const Record& other);
+	Record(QVariantMap recordMap);
+	Record(const QString &name, const QString &regType, const QString &domain);
+	Record(const char *name, const char *regType, const char *domain);
+	~Record();
+	bool operator<(const bonjour::Record other) const;
+	void setServiceName(QLatin1String name);
+	QVariantMap toMap() const;
+	//static Record fromMap(QVariantMap recordMap);
+	bool operator==(const Record &other) const;
+	void setServiceName(QString serviceName);
+	const QString &serviceName() const;
+	void setRegisteredType(QString registeredType);
+	const QString &registeredType() const;
+	void setReplyDomain(QString replyDomain);
+	const QString &replyDomain() const;
 
-	void resolveBonjourRecord(const BonjourRecord &record);
-	void getAddrInfo(const char * hostName);
-
-signals:
-	void bonjourRecordResolved(const QHostAddress &hostAddress, int port);
-	void error(DNSServiceErrorType error);
-
-private slots:
-	void bonjourSocketReadyRead();
-	void cleanupResolve();
-	void finishConnect(const QHostAddress &hostAddress);
+	int const * const &desafio(int const * const & a) const;
 
 private:
-	static void DNSSD_API bonjourResolveReply(DNSServiceRef sdRef,
-			DNSServiceFlags flags, quint32 interfaceIndex,
-			DNSServiceErrorType errorCode, const char *fullName,
-			const char *hosttarget, quint16 port, quint16 txtLen,
-			const char *txtRecord, void *context);
-	static void DNSSD_API bonjourGetAddrInfoReply(DNSServiceRef sdRef,
-			DNSServiceFlags flags, quint32 interfaceIndex,
-			DNSServiceErrorType errorCode, const char *hostName,
-			const struct sockaddr* address, quint32 ttl, void *context);
-	DNSServiceRef dnssref;
-	QSocketNotifier *bonjourSocket;
-	int bonjourPort;
+	QSharedDataPointer<RecordData> d;
 };
 
-#endif // BONJOURSERVICERESOLVER_H
+}  // namespace bonjour
+
+Q_DECLARE_METATYPE(bonjour::Record)
+
+#endif // BONJOURRECORD_H

@@ -30,25 +30,26 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define BONJOURSERVICEREGISTER_H
 
 #include <QtCore/QObject>
+#include <dns_sd.h>
+#include "Record.hpp"
 
-#include "bonjourrecord.h"
 class QSocketNotifier;
 
-#include <dns_sd.h>
+namespace bonjour {
 
-class BonjourServiceRegister : public QObject
+class ServiceRegister : public QObject
 {
     Q_OBJECT
 public:
-    BonjourServiceRegister(QObject *parent = 0);
-    ~BonjourServiceRegister();
+    ServiceRegister(QObject *parent = 0);
+    ~ServiceRegister();
 
-    void registerService(const BonjourRecord &record, quint16 servicePort);
-    inline BonjourRecord registeredRecord() const {return finalRecord; }
+    void registerService(const Record &record, quint16 servicePort);
+    inline Record registeredRecord() const {return finalRecord; }
 
 signals:
     void error(DNSServiceErrorType error);
-    void serviceRegistered(const BonjourRecord &record);
+    void serviceRegistered(const bonjour::Record &record);
 
 private slots:
     void bonjourSocketReadyRead();
@@ -60,7 +61,9 @@ private:
                                        void *context);
     DNSServiceRef dnssref;
     QSocketNotifier *bonjourSocket;
-    BonjourRecord finalRecord;
+    Record finalRecord;
 };
+
+}  // namespace bonjour
 
 #endif // BONJOURSERVICEREGISTER_H
